@@ -266,6 +266,7 @@ export default function SnakePage() {
       {/* Always-visible restart button */}
       <div style={{ position: "absolute", bottom: 80, left: 20, zIndex: 99 }}>
         <button
+          onTouchStart={(e) => { e.preventDefault(); reset(); }}
           onClick={reset}
           style={{
             padding: "8px 18px", background: "rgba(255,255,255,0.15)", color: "#fff",
