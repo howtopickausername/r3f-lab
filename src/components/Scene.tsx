@@ -10,6 +10,7 @@ import { LavaMesh } from './LavaMesh';
 import { CrystalMesh } from './CrystalMesh';
 import { ForceFieldMesh } from './ForceFieldMesh';
 import { IceMeltMesh } from './IceMeltMesh';
+import SnakeScene from './SnakeScene';
 
 // ═══ Original Dissolve Shader (multiple random objects) ═══
 const vertexShader = /* glsl */ `
@@ -138,7 +139,7 @@ const GALLERY_LAYOUT: { pos: [number, number, number]; label: string }[] = [
 ];
 
 export default function Scene() {
-  const [mode, setMode] = useState<'gallery' | 'dissolve'>('gallery');
+  const [mode, setMode] = useState<'gallery' | 'dissolve' | 'snake'>('gallery');
   const [models, setModels] = useState(() => Array.from({ length: 15 }, (_, i) => randomModel(i)));
   const [count, setCount] = useState(15);
 
@@ -166,7 +167,7 @@ export default function Scene() {
           <ForceFieldMesh position={GALLERY_LAYOUT[4].pos} />
           <IceMeltMesh position={GALLERY_LAYOUT[5].pos} />
         </Canvas>
-      ) : (
+      ) : mode === 'dissolve' ? (
         <Canvas camera={{ position: [0, 0, 7], fov: 50 }} style={{ background: '#050510' }}>
           <ambientLight intensity={0.6} />
           <pointLight position={[8, 6, 8]} intensity={2} />
@@ -174,6 +175,8 @@ export default function Scene() {
           {models.map((m) => <DissolveObj key={m.id} model={m} />)}
           <OrbitControls autoRotate autoRotateSpeed={0.3} enableDamping />
         </Canvas>
+      ) : (
+        <SnakeScene />
       )}
 
       {/* UI Overlay */}
@@ -202,6 +205,18 @@ export default function Scene() {
         >
           🟡 溶解随机
         </button>
+        <button
+          onClick={() => setMode('snake')}
+          style={{
+            padding: '8px 16px', borderRadius: 20, cursor: 'pointer', fontSize: 14, fontWeight: 500,
+            background: mode === 'snake' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.5)',
+            color: mode === 'snake' ? '#fff' : 'rgba(255,255,255,0.5)',
+            border: `2px solid ${mode === 'snake' ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'}`,
+            backdropFilter: 'blur(8px)', transition: 'all 0.2s',
+          }}
+        >
+          🎮 贪吃蛇
+        </button>
         {mode === 'dissolve' && (
           <>
             <button onClick={regenerate} style={{ padding: '8px 14px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 20, cursor: 'pointer', fontSize: 14 }}>
@@ -215,7 +230,7 @@ export default function Scene() {
       </div>
 
       <div style={{ position: 'absolute', top: 12, left: 16, color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: 'monospace', zIndex: 10 }}>
-        {mode === 'gallery' ? '6 effects · drag to orbit' : `${count} objects · dissolve shader · drag to orbit`}
+        {mode === 'gallery' ? '6 effects · drag to orbit' : mode === 'dissolve' ? `${count} objects · dissolve shader · drag to orbit` : 'RTT: Snake on handheld console · drag to orbit'}
       </div>
     </div>
   );
