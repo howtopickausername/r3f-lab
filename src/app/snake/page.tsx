@@ -260,23 +260,22 @@ export default function SnakePage() {
         </span>
       </div>
       <div style={{ position: "absolute", top: 38, left: 16, zIndex: 99, color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "monospace" }}>
-        Arrow keys · R to restart
+        D-pad to play · ↻ to restart
       </div>
 
-      {dead && (
-        <div style={{ position: "absolute", bottom: 80, left: 20, zIndex: 99 }}>
-          <button
-            onClick={reset}
-            style={{
-              padding: "8px 18px", background: "rgba(255,255,255,0.15)", color: "#fff",
-              border: "2px solid rgba(255,255,255,0.5)", borderRadius: 20,
-              cursor: "pointer", fontSize: 14, fontWeight: 500, backdropFilter: "blur(8px)",
-            }}
-          >
-            🔄 重新开始
-          </button>
-        </div>
-      )}
+      {/* Always-visible restart button */}
+      <div style={{ position: "absolute", bottom: 80, left: 20, zIndex: 99 }}>
+        <button
+          onClick={reset}
+          style={{
+            padding: "8px 18px", background: "rgba(255,255,255,0.15)", color: "#fff",
+            border: "2px solid rgba(255,255,255,0.5)", borderRadius: 20,
+            cursor: "pointer", fontSize: 14, fontWeight: 500, backdropFilter: "blur(8px)",
+          }}
+        >
+          ↻
+        </button>
+      </div>
 
       {/* D-pad */}
       <div style={{
