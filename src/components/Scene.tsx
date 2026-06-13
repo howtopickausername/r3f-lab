@@ -154,7 +154,7 @@ export default function Scene() {
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      {mode === 'gallery' ? (
+      {mode === 'gallery' && (
         <Canvas camera={{ position: [0, 0, 8], fov: 50 }} gl={{ antialias: true }} style={{ background: '#0a0a0f' }}>
           <ambientLight intensity={0.3} />
           <pointLight position={[5, 5, 5]} intensity={1.5} />
@@ -167,7 +167,8 @@ export default function Scene() {
           <ForceFieldMesh position={GALLERY_LAYOUT[4].pos} />
           <IceMeltMesh position={GALLERY_LAYOUT[5].pos} />
         </Canvas>
-      ) : mode === 'dissolve' ? (
+      )}
+      {mode === 'dissolve' && (
         <Canvas camera={{ position: [0, 0, 7], fov: 50 }} style={{ background: '#050510' }}>
           <ambientLight intensity={0.6} />
           <pointLight position={[8, 6, 8]} intensity={2} />
@@ -175,7 +176,7 @@ export default function Scene() {
           {models.map((m) => <DissolveObj key={m.id} model={m} />)}
           <OrbitControls autoRotate autoRotateSpeed={0.3} enableDamping />
         </Canvas>
-      ) : null}
+      )}
 
       {/* UI Overlay */}
       <div style={{ position: 'absolute', bottom: 20, left: 0, right: 0, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', zIndex: 10, padding: '0 16px' }}>
