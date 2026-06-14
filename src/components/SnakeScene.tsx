@@ -2,8 +2,9 @@
 
 import { useRef, useEffect, useCallback, useState, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 // ═══ Snake Game Logic ═══
 const GRID = 10;
@@ -52,37 +53,54 @@ function tick(snake: Point[], dir: string, food: Point): { snake: Point[]; food:
 
 // ═══ Console Model (GLB) ═══
 function ConsoleModel({ screenTexture }: { screenTexture: THREE.Texture }) {
-  console.log("[GLB] ConsoleModel rendering, preload starting...");
+  const [scene, setScene] = useState<THREE.Group | null>(null);
   
-  useGLTF.preload("/r3f-lab/models/gameboy-retro.glb");
-  const gltf = useGLTF("/r3f-lab/models/gameboy-retro.glb");
-  const scene = gltf.scene;
-  
-  console.log("[GLB] useGLTF resolved, scene:", scene);
-
-  // Replace screen material with dynamic texture
   useEffect(() => {
-    console.log("[GLB] useEffect running, traversing...");
-    let foundScreen = false;
-    const meshNames: string[] = [];
-    
-    scene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        meshNames.push(child.name);
-      }
-      if (child.name === "screen.001" && child instanceof THREE.Mesh) {
-        console.log("[GLB] ✅ Found screen.001, replacing material");
-        child.material = new THREE.MeshBasicMaterial({
-          map: screenTexture,
+    console.log("[GLB] Starting GLTFLoader...");
+    const loader = new GLTFLoader();
+    loader.load(
+      "/r3f-lab/models/gameboy-retro.glb",
+      (gltf) => {
+        console.log("[GLB] ✅ Model loaded! scene:", gltf.scene);
+        console.log("[GLB] scene children:", gltf.scene.children.map(c => c.name));
+        
+        // Find screen and replace material
+        let foundScreen = false;
+        gltf.scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            console.log("[GLB] mesh:", child.name);
+          }
+          if (child.name === "screen.001" && child instanceof THREE.Mesh) {
+            console.log("[GLB] ✅ Replacing screen.001 material");
+            child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
+            foundScreen = true;
+          }
         });
-        foundScreen = true;
+        console.log("[GLB] screen.001 found:", foundScreen);
+        setScene(gltf.scene);
+      },
+      (progress) => {
+        if (progress.total) {
+          console.log(`[GLB] Loading: ${Math.round(progress.loaded/progress.total*100)}%`);
+        }
+      },
+      (error) => {
+        console.error("[GLB] ❌ Load failed:", error);
       }
-    });
-    
-    console.log("[GLB] Mesh nodes:", meshNames.join(", "));
-    console.log("[GLB] screen.001 found:", foundScreen);
-  }, [scene, screenTexture]);
-
+    );
+  }, [screenTexture]);
+  
+  if (!scene) {
+    console.log("[GLB] Waiting for load...");
+    return (
+      <mesh>
+        <boxGeometry args={[0.4, 0.4, 0.05]} />
+        <meshBasicMaterial color="orange" />
+      </mesh>
+    );
+  }
+  
+  console.log("[GLB] Rendering model");
   return <primitive object={scene} position={[0, -0.25, 0.6]} rotation={[0.2, 0, 0]} scale={0.85} />;
 }
 
@@ -288,6 +306,7 @@ export default function SnakeScene() {
           />
           <Room />
           <Character />
+          {console.log("[DEBUG] texture=", !!texture)}
           {texture && (
             <Suspense fallback={<mesh><boxGeometry args={[0.5,0.5,0.5]} /><meshBasicMaterial color="red" /></mesh>}>
               <ConsoleModel screenTexture={texture} />
