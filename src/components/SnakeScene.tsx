@@ -285,7 +285,7 @@ export default function SnakeScene() {
           />
           <Room />
           <Character />
-          {console.log("[DEBUG] texture=", !!texture)}
+          {(() => { console.log("[DEBUG] texture=", !!texture); return null; })()}
           {texture && (
             <Suspense fallback={<mesh><boxGeometry args={[0.5,0.5,0.5]} /><meshBasicMaterial color="red" /></mesh>}>
               <ConsoleModel screenTexture={texture} />
