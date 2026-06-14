@@ -60,7 +60,7 @@ function ConsoleModel({
   screenTexture: THREE.Texture; 
   onDebug?: (msg: string) => void;
 }) {
-  const gltf = useGLTF("/r3f-lab/models/gameboy-retro.glb");
+  const gltf = useGLTF("/models/gameboy-retro.glb");
   const scene = gltf.scene;
 
   // Clone scene to avoid mutating cached GLTF
@@ -73,7 +73,7 @@ function ConsoleModel({
       if (child instanceof THREE.Mesh) {
         meshNames.push(child.name);
       }
-      if (child.name === "screen.001" && child instanceof THREE.Mesh) {
+      if (child.name.includes("screen001") && child instanceof THREE.Mesh) {
         child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
         foundScreen = true;
       }
