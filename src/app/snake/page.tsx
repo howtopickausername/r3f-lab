@@ -94,12 +94,23 @@ function drawGame(canvas: HTMLCanvasElement, snake: {x:number;y:number}[], food:
 }
 
 // ═══ 3D ═══
-function ConsoleMesh({ texture }: { texture: THREE.Texture }) {
+function ConsoleMesh({ texRef }: { texRef: React.MutableRefObject<THREE.CanvasTexture | null> }) {
+  const meshRef = useRef<THREE.Mesh>(null!);
+  useEffect(() => {
+    const m = meshRef.current;
+    const t = texRef.current;
+    if (m && t) {
+      const mat = m.material as THREE.MeshBasicMaterial;
+      mat.map = t;
+      mat.color.set("#ffffff");
+      mat.needsUpdate = true;
+    }
+  }, [texRef]);
   return (
     <group position={[0, -0.3, 0.5]} rotation={[0.25, 0, 0]}>
       <mesh><boxGeometry args={[0.9, 1.2, 0.08]} /><meshStandardMaterial color="#c0c0d0" roughness={0.4} metalness={0.3} /></mesh>
       <mesh position={[0, 0.18, 0.045]}><boxGeometry args={[0.7, 0.5, 0.01]} /><meshStandardMaterial color="#1a1a1a" roughness={0.8} /></mesh>
-      <mesh position={[0, 0.18, 0.048]}><planeGeometry args={[0.6, 0.4]} /><meshBasicMaterial map={texture} /></mesh>
+      <mesh ref={meshRef} position={[0, 0.18, 0.048]}><planeGeometry args={[0.6, 0.4]} /><meshBasicMaterial color="#ff0000" /></mesh>
       <mesh position={[-0.2, -0.35, 0.045]}><boxGeometry args={[0.18, 0.18, 0.015]} /><meshStandardMaterial color="#555" roughness={0.5} /></mesh>
       <mesh position={[0.2, -0.3, 0.045]}><cylinderGeometry args={[0.06, 0.06, 0.015, 16]} /><meshStandardMaterial color="#e04060" roughness={0.3} /></mesh>
       <mesh position={[0.3, -0.38, 0.045]}><cylinderGeometry args={[0.06, 0.06, 0.015, 16]} /><meshStandardMaterial color="#e04060" roughness={0.3} /></mesh>
@@ -134,6 +145,7 @@ function Room() {
 // ═══ Main ═══
 export default function SnakePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const texRef = useRef<THREE.CanvasTexture | null>(null);
   const snakeRef = useRef(makeSnake());
   const foodRef = useRef(randomFood(makeSnake()));
@@ -161,24 +173,39 @@ export default function SnakePage() {
     mountedRef.current = true;
     log("▲ Mounted: starting game loop");
 
+    // Create 2D canvas programmatically (hidden canvas may lack context on mobile)
+    let gameCanvas = canvasRef.current;
+    if (!gameCanvas) {
+      gameCanvas = document.createElement("canvas");
+      gameCanvas.width = CELL;
+      gameCanvas.height = CELL;
+      log("▲ Created canvas programmatically");
+    }
+    const ctx = gameCanvas.getContext("2d");
+    if (!ctx) {
+      log("⚠ FATAL: no 2d context!");
+      return;
+    }
+    gameCanvasRef.current = gameCanvas;
+    // Test draw: red rectangle
+    ctx.fillStyle = "#ff0000";
+    ctx.fillRect(0, 0, CELL, CELL);
+    const pixel = ctx.getImageData(10, 10, 1, 1).data;
+    log("▲ 2D context OK, test pixel=[" + pixel[0] + "," + pixel[1] + "," + pixel[2] + "]");
+    ctx.clearRect(0, 0, CELL, CELL);
+
     const drawNow = () => {
-      const c = canvasRef.current;
-      if (!c) { log("⚠ drawNow: canvasRef null!"); return; }
-      drawGame(c, snakeRef.current, foodRef.current);
+      drawGame(gameCanvas!, snakeRef.current, foodRef.current);
       if (texRef.current) texRef.current.needsUpdate = true;
     };
 
-    const c = canvasRef.current;
-    if (c) {
-      texRef.current = new THREE.CanvasTexture(c);
-      texRef.current.minFilter = THREE.NearestFilter;
-      texRef.current.magFilter = THREE.NearestFilter;
-      setTexture(texRef.current);
-      log("▲ CanvasTexture created: " + CELL + "x" + CELL);
-      drawNow();
-    } else {
-      log("⚠ canvasRef is null on mount!");
-    }
+    // Create texture from game canvas
+    texRef.current = new THREE.CanvasTexture(gameCanvas);
+    texRef.current.minFilter = THREE.NearestFilter;
+    texRef.current.magFilter = THREE.NearestFilter;
+    setTexture(texRef.current);
+    log("▲ CanvasTexture created: " + CELL + "x" + CELL);
+    drawNow();
 
     let frameId: number;
     let tickCount = 0;
@@ -231,7 +258,7 @@ export default function SnakePage() {
   }, [dead]);
 
   const reset = useCallback(() => {
-    log("↻ reset() called. dead=" + dead + " canvas=" + !!canvasRef.current + " tex=" + !!texRef.current);
+    log("↻ reset() called. dead=" + dead + " gameCanvas=" + !!gameCanvasRef.current + " tex=" + !!texRef.current);
     snakeRef.current = makeSnake();
     foodRef.current = randomFood(makeSnake());
     dirRef.current = "RIGHT";
@@ -240,13 +267,13 @@ export default function SnakePage() {
     lastRef.current = 0;
     setScore(0);
     setDead(false);
-    const c = canvasRef.current;
+    const c = gameCanvasRef.current;
     if (c) {
       drawGame(c, snakeRef.current, foodRef.current);
       if (texRef.current) texRef.current.needsUpdate = true;
       log("↻ reset: drawGame + needsUpdate done");
     } else {
-      log("⚠ reset: canvasRef is null!");
+      log("⚠ reset: gameCanvas is null!");
     }
   }, [dead, log]);
 
@@ -278,7 +305,7 @@ export default function SnakePage() {
           />
           <Room />
           <Character />
-          {texture && <ConsoleMesh texture={texture} />}
+          <ConsoleMesh texRef={texRef} />
         </Canvas>
       </div>
 
