@@ -81,7 +81,7 @@ function ConsoleModel({
     });
     
     onDebug?.("Meshes: " + meshNames.join(", "));
-    onDebug?.(foundScreen ? "✅ screen.001 FOUND" : "❌ screen.001 NOT FOUND");
+    onDebug?.(foundScreen ? "✅ glass001 FOUND (screen active)" : "❌ glass001 NOT FOUND");
     return clone;
   }, [scene, screenTexture, onDebug]);
 
