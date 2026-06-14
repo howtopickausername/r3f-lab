@@ -52,19 +52,32 @@ function tick(snake: Point[], dir: string, food: Point): { snake: Point[]; food:
 
 // ═══ Console Model (GLB) ═══
 function ConsoleModel({ screenTexture }: { screenTexture: THREE.Texture }) {
-  const { scene } = useGLTF("/r3f-lab/models/gameboy-retro.glb");
+  const gltf = useGLTF("/r3f-lab/models/gameboy-retro.glb");
+  const scene = gltf.scene;
 
   // Replace screen material with dynamic texture
   useEffect(() => {
+    console.log("[GLB] useGLTF loaded, nodes in scene:", scene.children.length);
+    
+    let foundScreen = false;
+    const allNames: string[] = [];
+    
     scene.traverse((child) => {
+      allNames.push(`${child.name}(${child.type})`);
       if (child.name === "screen.001" && child instanceof THREE.Mesh) {
+        console.log("[GLB] ✅ Found screen.001, replacing material");
         child.material = new THREE.MeshBasicMaterial({
           map: screenTexture,
         });
+        foundScreen = true;
       }
     });
+    
+    console.log("[GLB] All nodes:", allNames.join(", "));
+    console.log("[GLB] screen.001 found:", foundScreen);
   }, [scene, screenTexture]);
 
+  console.log("[GLB] Rendering primitive, scene children:", scene.children.length);
   return <primitive object={scene} position={[0, -0.25, 0.6]} rotation={[0.2, 0, 0]} scale={0.85} />;
 }
 
