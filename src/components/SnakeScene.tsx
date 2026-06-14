@@ -75,7 +75,19 @@ function ConsoleModel({
       }
       if (child.name.includes("screen001") && child instanceof THREE.Mesh) {
         child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
+        child.renderOrder = 999;
+        child.material.depthTest = false;
+        child.material.depthWrite = false;
         foundScreen = true;
+      }
+      // Make glass semi-transparent so screen shows through
+      if (child.name.includes("glass001") && child instanceof THREE.Mesh) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => { m.transparent = true; m.opacity = 0.25; });
+        } else {
+          child.material.transparent = true;
+          child.material.opacity = 0.25;
+        }
       }
     });
     
