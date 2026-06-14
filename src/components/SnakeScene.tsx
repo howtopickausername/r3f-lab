@@ -73,21 +73,10 @@ function ConsoleModel({
       if (child instanceof THREE.Mesh) {
         meshNames.push(child.name);
       }
-      if (child.name.includes("screen001") && child instanceof THREE.Mesh) {
-        child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
-        child.renderOrder = 999;
-        child.material.depthTest = false;
-        child.material.depthWrite = false;
-        foundScreen = true;
-      }
-      // Make glass semi-transparent so screen shows through
+      // Apply snake texture directly to glass surface — glass IS the screen
       if (child.name.includes("glass001") && child instanceof THREE.Mesh) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach(m => { m.transparent = true; m.opacity = 0.25; });
-        } else {
-          child.material.transparent = true;
-          child.material.opacity = 0.25;
-        }
+        child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
+        foundScreen = true;
       }
     });
     
