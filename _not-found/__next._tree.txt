@@ -1,2 +1,2 @@
-:HL["/r3f-lab/_next/static/chunks/24n5t1uu9mw9z.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"9wETWHTkoHCqf54YOjrj5"}
+:HL["/r3f-lab/_next/static/chunks/38da0_2f7j26j.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"VOGa-HXzj09Pqd_4C-0GB"}
