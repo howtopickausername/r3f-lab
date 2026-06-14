@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState, Suspense } from "react";
+import { useRef, useEffect, useCallback, useState, Suspense, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const BUILD_TIME = Date.now();
 
@@ -55,55 +54,33 @@ function tick(snake: Point[], dir: string, food: Point): { snake: Point[]; food:
 
 // ═══ Console Model (GLB) ═══
 function ConsoleModel({ screenTexture }: { screenTexture: THREE.Texture }) {
-  const [scene, setScene] = useState<THREE.Group | null>(null);
+  console.log("[GLB] ConsoleModel rendering...");
+  const gltf = useGLTF("/r3f-lab/models/gameboy-retro.glb");
+  const scene = gltf.scene;
+
+  console.log("[GLB] Model loaded, traversing...");
   
-  useEffect(() => {
-    console.log("[GLB] Starting GLTFLoader...");
-    const loader = new GLTFLoader();
-    loader.load(
-      "/r3f-lab/models/gameboy-retro.glb",
-      (gltf) => {
-        console.log("[GLB] ✅ Model loaded! scene:", gltf.scene);
-        console.log("[GLB] scene children:", gltf.scene.children.map(c => c.name));
-        
-        // Find screen and replace material
-        let foundScreen = false;
-        gltf.scene.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            console.log("[GLB] mesh:", child.name);
-          }
-          if (child.name === "screen.001" && child instanceof THREE.Mesh) {
-            console.log("[GLB] ✅ Replacing screen.001 material");
-            child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
-            foundScreen = true;
-          }
-        });
-        console.log("[GLB] screen.001 found:", foundScreen);
-        setScene(gltf.scene);
-      },
-      (progress) => {
-        if (progress.total) {
-          console.log(`[GLB] Loading: ${Math.round(progress.loaded/progress.total*100)}%`);
-        }
-      },
-      (error) => {
-        console.error("[GLB] ❌ Load failed:", error);
+  // Clone scene to avoid mutating cached GLTF
+  const clonedScene = useMemo(() => {
+    console.log("[GLB] Cloning scene and finding screen...");
+    const clone = scene.clone(true);
+    let foundScreen = false;
+    clone.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        console.log("[GLB] mesh:", child.name);
       }
-    );
-  }, [screenTexture]);
-  
-  if (!scene) {
-    console.log("[GLB] Waiting for load...");
-    return (
-      <mesh>
-        <boxGeometry args={[0.4, 0.4, 0.05]} />
-        <meshBasicMaterial color="orange" />
-      </mesh>
-    );
-  }
-  
+      if (child.name === "screen.001" && child instanceof THREE.Mesh) {
+        console.log("[GLB] ✅ Replacing screen.001 material");
+        child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
+        foundScreen = true;
+      }
+    });
+    console.log("[GLB] screen.001 found:", foundScreen);
+    return clone;
+  }, [scene, screenTexture]);
+
   console.log("[GLB] Rendering model");
-  return <primitive object={scene} position={[0, -0.25, 0.6]} rotation={[0.2, 0, 0]} scale={0.85} />;
+  return <primitive object={clonedScene} position={[0, -0.25, 0.6]} rotation={[0.2, 0, 0]} scale={0.85} />;
 }
 
 // ═══ Character ═══
