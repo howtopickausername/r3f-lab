@@ -6,6 +6,8 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+const BUILD_TIME = Date.now();
+
 // ═══ Snake Game Logic ═══
 const GRID = 10;
 const CANVAS_SIZE = 200;
@@ -317,7 +319,7 @@ export default function SnakeScene() {
 
       {/* Info */}
       <div style={{ position: "absolute", top: 12, left: 16, color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: "monospace", zIndex: 25 }}>
-        Score: {score} {gameOver && "· GAME OVER"}
+        Score: {score} {gameOver && "· GAME OVER"} <span style={{color:"rgba(255,255,255,0.25)",fontSize:10}}>v{BUILD_TIME}</span>
       </div>
       <div style={{ position: "absolute", top: 36, left: 16, color: "rgba(255,255,255,0.35)", fontSize: 11, fontFamily: "monospace", zIndex: 25 }}>
         Arrow keys · R to restart
