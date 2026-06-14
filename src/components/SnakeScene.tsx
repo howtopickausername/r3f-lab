@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { useRef, useEffect, useCallback, useState, Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 // ═══ Snake Game Logic ═══
@@ -50,57 +50,22 @@ function tick(snake: Point[], dir: string, food: Point): { snake: Point[]; food:
   return { snake: newSnake, food: ate ? randomFood(newSnake) : food, ate, dead: false };
 }
 
-// ═══ Console Mesh ═══
-function ConsoleMesh({ screenTexture }: { screenTexture: THREE.Texture }) {
-  return (
-    <group position={[0, -0.3, 0.5]} rotation={[0.25, 0, 0]}>
-      {/* Body frame — 4 bars forming a recess for the screen */}
-      {/* Top bar */}
-      <mesh position={[0, 0.515, 0]}>
-        <boxGeometry args={[0.9, 0.17, 0.08]} />
-        <meshStandardMaterial color="#c0c0d0" roughness={0.4} metalness={0.3} />
-      </mesh>
-      {/* Bottom bar */}
-      <mesh position={[0, -0.335, 0]}>
-        <boxGeometry args={[0.9, 0.53, 0.08]} />
-        <meshStandardMaterial color="#c0c0d0" roughness={0.4} metalness={0.3} />
-      </mesh>
-      {/* Left bar */}
-      <mesh position={[-0.4, 0.18, 0]}>
-        <boxGeometry args={[0.1, 0.5, 0.08]} />
-        <meshStandardMaterial color="#c0c0d0" roughness={0.4} metalness={0.3} />
-      </mesh>
-      {/* Right bar */}
-      <mesh position={[0.4, 0.18, 0]}>
-        <boxGeometry args={[0.1, 0.5, 0.08]} />
-        <meshStandardMaterial color="#c0c0d0" roughness={0.4} metalness={0.3} />
-      </mesh>
-      {/* Dark inner bezel — lines the recess edge */}
-      <mesh position={[0, 0.18, 0.02]}>
-        <boxGeometry args={[0.68, 0.48, 0.005]} />
-        <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
-      </mesh>
-      {/* Screen — recessed into the body, z=0 = 4mm behind front face */}
-      <mesh position={[0, 0.18, 0]}>
-        <planeGeometry args={[0.6, 0.4]} />
-        <meshBasicMaterial map={screenTexture} />
-      </mesh>
-      {/* D-pad — slightly proud of body surface */}
-      <mesh position={[-0.2, -0.35, 0.05]}>
-        <boxGeometry args={[0.18, 0.18, 0.015]} />
-        <meshStandardMaterial color="#444" roughness={0.6} />
-      </mesh>
-      {/* Buttons */}
-      <mesh position={[0.2, -0.3, 0.05]}>
-        <cylinderGeometry args={[0.06, 0.06, 0.015, 16]} />
-        <meshStandardMaterial color="#e04060" roughness={0.3} />
-      </mesh>
-      <mesh position={[0.3, -0.38, 0.05]}>
-        <cylinderGeometry args={[0.06, 0.06, 0.015, 16]} />
-        <meshStandardMaterial color="#e04060" roughness={0.3} />
-      </mesh>
-    </group>
-  );
+// ═══ Console Model (GLB) ═══
+function ConsoleModel({ screenTexture }: { screenTexture: THREE.Texture }) {
+  const { scene } = useGLTF("/models/gameboy-retro.glb");
+
+  // Replace screen material with dynamic texture
+  useEffect(() => {
+    scene.traverse((child) => {
+      if (child.name === "screen.001" && child instanceof THREE.Mesh) {
+        child.material = new THREE.MeshBasicMaterial({
+          map: screenTexture,
+        });
+      }
+    });
+  }, [scene, screenTexture]);
+
+  return <primitive object={scene} position={[0, -0.25, 0.6]} rotation={[0.2, 0, 0]} scale={0.85} />;
 }
 
 // ═══ Character ═══
@@ -305,7 +270,11 @@ export default function SnakeScene() {
           />
           <Room />
           <Character />
-          {texture && <ConsoleMesh screenTexture={texture} />}
+          {texture && (
+            <Suspense fallback={null}>
+              <ConsoleModel screenTexture={texture} />
+            </Suspense>
+          )}
         </Canvas>
       </div>
 
