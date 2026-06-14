@@ -141,6 +141,42 @@ function Room() {
   );
 }
 
+// ═══ Log System ═══
+type LogEntry = { ts: string; msg: string };
+
+function timeStr() {
+  return new Date().toISOString().slice(11, 23);
+}
+
+function LogPanel({ logs }: { logs: LogEntry[] }) {
+  const [open, setOpen] = useState(false);
+  if (logs.length === 0) return null;
+  const last = logs.slice(-3);
+  return (
+    <div style={{ position: "absolute", top: 60, left: 12, right: 12, zIndex: 999, fontFamily: "monospace", pointerEvents: "auto" }}>
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <button onTouchStart={(e) => { e.preventDefault(); setOpen(!open); }} onClick={() => setOpen(!open)}
+          style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>
+          {open ? "▲ 收起日志" : "▼ 日志"}
+        </button>
+        <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>{logs.length} entries</span>
+      </div>
+      {!open && (
+        <div style={{ marginTop: 4, color: "rgba(255,255,255,0.35)", fontSize: 10, lineHeight: 1.4 }}>
+          {last.map((l, i) => <div key={i}>{l.ts} {l.msg}</div>)}
+        </div>
+      )}
+      {open && (
+        <div style={{ marginTop: 4, color: "rgba(255,255,255,0.45)", fontSize: 10, lineHeight: 1.5,
+          background: "rgba(0,0,0,0.85)", borderRadius: 6, padding: 8, maxHeight: 160, overflowY: "auto",
+          border: "1px solid rgba(255,255,255,0.15)", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+          {logs.map((l, i) => <div key={i}>{l.ts} {l.msg}</div>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ═══ Main Scene ═══
 export default function SnakeScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -155,6 +191,11 @@ export default function SnakeScene() {
   const [debugLines, setDebugLines] = useState<string[]>([]);
   const addDebug = useCallback((msg: string) => {
     setDebugLines(prev => [...prev.slice(-10), msg]);
+  }, []);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const log = useCallback((msg: string) => {
+    setLogs((prev) => [...prev.slice(-199), { ts: timeStr(), msg }]);
+    setDebugLines((prev) => [...prev.slice(-10), msg]); // also show in debug panel
   }, []);
   const speedRef = useRef(INITIAL_SPEED);
   const lastTickRef = useRef(0);
@@ -205,6 +246,7 @@ export default function SnakeScene() {
   // Game loop (auto-starts)
   useEffect(() => {
     let frameId: number;
+    let tickCount = 0;
 
     const loop = (time: number) => {
       frameId = requestAnimationFrame(loop);
@@ -221,14 +263,23 @@ export default function SnakeScene() {
         setScore((s) => s + 1);
         speedRef.current = Math.max(70, speedRef.current - 4);
       }
-      if (result.dead) setGameOver(true);
+      if (result.dead) {
+        log("☠ DEATH! len=" + result.snake.length);
+        setGameOver(true);
+      }
+
+      tickCount++;
+      if (tickCount % 30 === 0) {
+        log("⏱ tick #" + tickCount + " speed=" + speedRef.current + " len=" + snakeRef.current.length);
+      }
 
       draw();
     };
 
+    log("▲ Game loop started");
     frameId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(frameId);
-  }, [gameOver, draw]);
+    return () => { cancelAnimationFrame(frameId); };
+  }, [gameOver, draw, log]);
 
   // CanvasTexture
   useEffect(() => {
@@ -238,8 +289,9 @@ export default function SnakeScene() {
     screenTexRef.current.minFilter = THREE.NearestFilter;
     screenTexRef.current.magFilter = THREE.NearestFilter;
     setTexture(screenTexRef.current);
+    log("▲ CanvasTexture created: " + CANVAS_SIZE + "x" + CANVAS_SIZE);
     draw();
-  }, [draw]);
+  }, [draw, log]);
 
   // Keyboard
   useEffect(() => {
@@ -293,14 +345,15 @@ export default function SnakeScene() {
           />
           <Room />
           <Character />
-          {(() => { console.log("[DEBUG] texture=", !!texture); return null; })()}
           {texture && (
             <Suspense fallback={<mesh><boxGeometry args={[0.5,0.5,0.5]} /><meshBasicMaterial color="red" /></mesh>}>
-              <ConsoleModel screenTexture={texture} onDebug={addDebug} />
+              <ConsoleModel screenTexture={texture} onDebug={log} />
             </Suspense>
           )}
         </Canvas>
       </div>
+
+      <LogPanel logs={logs} />
 
       {/* Info */}
       <div style={{ position: "absolute", top: 12, left: 16, color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: "monospace", zIndex: 25 }}>
