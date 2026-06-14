@@ -53,33 +53,37 @@ function tick(snake: Point[], dir: string, food: Point): { snake: Point[]; food:
 }
 
 // ═══ Console Model (GLB) ═══
-function ConsoleModel({ screenTexture }: { screenTexture: THREE.Texture }) {
-  console.log("[GLB] ConsoleModel rendering...");
+function ConsoleModel({ 
+  screenTexture, 
+  onDebug 
+}: { 
+  screenTexture: THREE.Texture; 
+  onDebug?: (msg: string) => void;
+}) {
   const gltf = useGLTF("/r3f-lab/models/gameboy-retro.glb");
   const scene = gltf.scene;
 
-  console.log("[GLB] Model loaded, traversing...");
-  
   // Clone scene to avoid mutating cached GLTF
   const clonedScene = useMemo(() => {
-    console.log("[GLB] Cloning scene and finding screen...");
-    const clone = scene.clone(true);
     let foundScreen = false;
+    const meshNames: string[] = [];
+    
+    const clone = scene.clone(true);
     clone.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        console.log("[GLB] mesh:", child.name);
+        meshNames.push(child.name);
       }
       if (child.name === "screen.001" && child instanceof THREE.Mesh) {
-        console.log("[GLB] ✅ Replacing screen.001 material");
         child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
         foundScreen = true;
       }
     });
-    console.log("[GLB] screen.001 found:", foundScreen);
+    
+    onDebug?.("Meshes: " + meshNames.join(", "));
+    onDebug?.(foundScreen ? "✅ screen.001 FOUND" : "❌ screen.001 NOT FOUND");
     return clone;
-  }, [scene, screenTexture]);
+  }, [scene, screenTexture, onDebug]);
 
-  console.log("[GLB] Rendering model");
   return <primitive object={clonedScene} position={[0, -0.25, 0.6]} rotation={[0.2, 0, 0]} scale={0.85} />;
 }
 
@@ -148,6 +152,10 @@ export default function SnakeScene() {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  const [debugLines, setDebugLines] = useState<string[]>([]);
+  const addDebug = useCallback((msg: string) => {
+    setDebugLines(prev => [...prev.slice(-10), msg]);
+  }, []);
   const speedRef = useRef(INITIAL_SPEED);
   const lastTickRef = useRef(0);
 
@@ -288,7 +296,7 @@ export default function SnakeScene() {
           {(() => { console.log("[DEBUG] texture=", !!texture); return null; })()}
           {texture && (
             <Suspense fallback={<mesh><boxGeometry args={[0.5,0.5,0.5]} /><meshBasicMaterial color="red" /></mesh>}>
-              <ConsoleModel screenTexture={texture} />
+              <ConsoleModel screenTexture={texture} onDebug={addDebug} />
             </Suspense>
           )}
         </Canvas>
@@ -298,6 +306,11 @@ export default function SnakeScene() {
       <div style={{ position: "absolute", top: 12, left: 16, color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: "monospace", zIndex: 25 }}>
         Score: {score} {gameOver && "· GAME OVER"} <span style={{color:"rgba(255,255,255,0.25)",fontSize:10}}>v{BUILD_TIME}</span>
       </div>
+      {debugLines.length > 0 && (
+        <div style={{ position: "absolute", top: 36, left: 16, color: "rgba(255,255,100,0.7)", fontSize: 9, fontFamily: "monospace", zIndex: 99, background: "rgba(0,0,0,0.7)", padding: "2px 6px", borderRadius: 4, maxWidth: "90%" }}>
+          {debugLines.map((l, i) => <div key={i}>{l}</div>)}
+        </div>
+      )}
       <div style={{ position: "absolute", top: 36, left: 16, color: "rgba(255,255,255,0.35)", fontSize: 11, fontFamily: "monospace", zIndex: 25 }}>
         Arrow keys · R to restart
       </div>
