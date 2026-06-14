@@ -8,8 +8,10 @@ import * as THREE from "three";
 const BUILD_TIME = Date.now();
 
 // ═══ Snake Game Logic ═══
-const GRID = 10;
-const CANVAS_SIZE = 200;
+const GRID_X = 16;
+const GRID_Y = 14;
+const CANVAS_W = 320;
+const CANVAS_H = 288;
 const INITIAL_SPEED = 180;
 
 type Point = { x: number; y: number };
@@ -18,8 +20,8 @@ function randomFood(snake: Point[]): Point {
   let p: Point;
   do {
     p = {
-      x: Math.floor(Math.random() * GRID),
-      y: Math.floor(Math.random() * GRID),
+      x: Math.floor(Math.random() * GRID_X),
+      y: Math.floor(Math.random() * GRID_Y),
     };
   } while (snake.some((s) => s.x === p.x && s.y === p.y));
   return p;
@@ -34,10 +36,10 @@ const OPPOSITES: Record<string, string> = { UP: "DOWN", DOWN: "UP", LEFT: "RIGHT
 function tick(snake: Point[], dir: string, food: Point): { snake: Point[]; food: Point; ate: boolean; dead: boolean } {
   const head = snake[0];
   const newHead = { x: head.x, y: head.y };
-  if (dir === "UP") newHead.y = (newHead.y - 1 + GRID) % GRID;
-  if (dir === "DOWN") newHead.y = (newHead.y + 1) % GRID;
-  if (dir === "LEFT") newHead.x = (newHead.x - 1 + GRID) % GRID;
-  if (dir === "RIGHT") newHead.x = (newHead.x + 1) % GRID;
+  if (dir === "UP") newHead.y = (newHead.y - 1 + GRID_Y) % GRID_Y;
+  if (dir === "DOWN") newHead.y = (newHead.y + 1) % GRID_Y;
+  if (dir === "LEFT") newHead.x = (newHead.x - 1 + GRID_X) % GRID_X;
+  if (dir === "RIGHT") newHead.x = (newHead.x + 1) % GRID_X;
 
   // Self-collision (skip tail tip if didn't eat)
   const body = snake.slice(0, -1);
@@ -206,17 +208,20 @@ export default function SnakeScene() {
     const cvs = canvasRef.current;
     if (!cvs) return;
     const ctx = cvs.getContext("2d")!;
-    const cw = CANVAS_SIZE / GRID;
+    const cellW = CANVAS_W / GRID_X;
+    const cellH = CANVAS_H / GRID_Y;
 
     ctx.fillStyle = "#1a1a2e";
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     // Grid
     ctx.strokeStyle = "#222244";
     ctx.lineWidth = 0.5;
-    for (let i = 0; i <= GRID; i++) {
-      ctx.beginPath(); ctx.moveTo(i * cw, 0); ctx.lineTo(i * cw, CANVAS_SIZE); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, i * cw); ctx.lineTo(CANVAS_SIZE, i * cw); ctx.stroke();
+    for (let i = 0; i <= GRID_X; i++) {
+      ctx.beginPath(); ctx.moveTo(i * cellW, 0); ctx.lineTo(i * cellW, CANVAS_H); ctx.stroke();
+    }
+    for (let i = 0; i <= GRID_Y; i++) {
+      ctx.beginPath(); ctx.moveTo(0, i * cellH); ctx.lineTo(CANVAS_W, i * cellH); ctx.stroke();
     }
 
     // Food (pulse)
@@ -225,7 +230,7 @@ export default function SnakeScene() {
     ctx.shadowColor = "#ff4444";
     ctx.shadowBlur = 8 * pulse;
     ctx.beginPath();
-    ctx.arc(foodRef.current.x * cw + cw / 2, foodRef.current.y * cw + cw / 2, (cw / 2 - 2) * pulse, 0, Math.PI * 2);
+    ctx.arc(foodRef.current.x * cellW + cellW / 2, foodRef.current.y * cellH + cellH / 2, (cellW / 2 - 2) * pulse, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
@@ -238,7 +243,7 @@ export default function SnakeScene() {
       const b = Math.floor(0x44 + ratio * 0x55);
       ctx.fillStyle = `rgb(${r},${g},${b})`;
       const pad = i === 0 ? 1 : 2;
-      ctx.fillRect(p.x * cw + pad, p.y * cw + pad, cw - pad * 2, cw - pad * 2);
+      ctx.fillRect(p.x * cellW + pad, p.y * cellH + pad, cellW - pad * 2, cellH - pad * 2);
     });
 
     screenTexRef.current && (screenTexRef.current.needsUpdate = true);
@@ -290,7 +295,7 @@ export default function SnakeScene() {
     screenTexRef.current.minFilter = THREE.NearestFilter;
     screenTexRef.current.magFilter = THREE.NearestFilter;
     setTexture(screenTexRef.current);
-    log("▲ CanvasTexture created: " + CANVAS_SIZE + "x" + CANVAS_SIZE);
+    log("▲ CanvasTexture created: " + CANVAS_W + "x" + CANVAS_H);
     draw();
   }, [draw, log]);
 
@@ -331,7 +336,7 @@ export default function SnakeScene() {
 
   return (
     <>
-      <canvas ref={canvasRef} width={CANVAS_SIZE} height={CANVAS_SIZE} style={{ display: "none" }} />
+      <canvas ref={canvasRef} width={CANVAS_W} height={CANVAS_H} style={{ display: "none" }} />
 
       <div style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}>
         <Canvas
