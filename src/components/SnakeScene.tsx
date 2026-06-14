@@ -52,18 +52,24 @@ function tick(snake: Point[], dir: string, food: Point): { snake: Point[]; food:
 
 // ═══ Console Model (GLB) ═══
 function ConsoleModel({ screenTexture }: { screenTexture: THREE.Texture }) {
+  console.log("[GLB] ConsoleModel rendering, preload starting...");
+  
+  useGLTF.preload("/r3f-lab/models/gameboy-retro.glb");
   const gltf = useGLTF("/r3f-lab/models/gameboy-retro.glb");
   const scene = gltf.scene;
+  
+  console.log("[GLB] useGLTF resolved, scene:", scene);
 
   // Replace screen material with dynamic texture
   useEffect(() => {
-    console.log("[GLB] useGLTF loaded, nodes in scene:", scene.children.length);
-    
+    console.log("[GLB] useEffect running, traversing...");
     let foundScreen = false;
-    const allNames: string[] = [];
+    const meshNames: string[] = [];
     
     scene.traverse((child) => {
-      allNames.push(`${child.name}(${child.type})`);
+      if (child instanceof THREE.Mesh) {
+        meshNames.push(child.name);
+      }
       if (child.name === "screen.001" && child instanceof THREE.Mesh) {
         console.log("[GLB] ✅ Found screen.001, replacing material");
         child.material = new THREE.MeshBasicMaterial({
@@ -73,11 +79,10 @@ function ConsoleModel({ screenTexture }: { screenTexture: THREE.Texture }) {
       }
     });
     
-    console.log("[GLB] All nodes:", allNames.join(", "));
+    console.log("[GLB] Mesh nodes:", meshNames.join(", "));
     console.log("[GLB] screen.001 found:", foundScreen);
   }, [scene, screenTexture]);
 
-  console.log("[GLB] Rendering primitive, scene children:", scene.children.length);
   return <primitive object={scene} position={[0, -0.25, 0.6]} rotation={[0.2, 0, 0]} scale={0.85} />;
 }
 
@@ -284,7 +289,7 @@ export default function SnakeScene() {
           <Room />
           <Character />
           {texture && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<mesh><boxGeometry args={[0.5,0.5,0.5]} /><meshBasicMaterial color="red" /></mesh>}>
               <ConsoleModel screenTexture={texture} />
             </Suspense>
           )}
