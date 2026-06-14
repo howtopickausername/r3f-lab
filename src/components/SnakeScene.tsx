@@ -77,11 +77,13 @@ function ConsoleModel({
       }
       // Apply snake texture directly to glass surface — glass IS the screen
       if (child.name.includes("glass001") && child instanceof THREE.Mesh) {
-        // Glass UV range: u=[0.6107, 1.0], v=[0, 1.0]
-        // Remap to [0, 1] so the full snake canvas fills the glass screen
-        // u' = u * repeat.x + offset.x  →  0 = 0.6107 * 2.564 + (-1.564),  1 = 1.0 * 2.564 + (-1.564)
-        screenTexture.offset.set(-1.564, 0);
-        screenTexture.repeat.set(2.564, 1);
+        // Glass UV range: u=[0.6107, 1.0], v=[0, 0.9997]
+        // Remap horizontal: u' = u * 2.5687 - 1.5687 → [0.61,1.0] maps to [0,1]
+        // Vertical v is already [0,1], no remap needed
+        // But physical glass extends beyond visible screen area (screen is v=[0.449,0.783])
+        // We leave v as-is for now — user will diagnose
+        screenTexture.offset.set(-1.5687, 0);
+        screenTexture.repeat.set(2.5687, 1);
         child.material = new THREE.MeshBasicMaterial({ map: screenTexture });
         foundScreen = true;
       }
