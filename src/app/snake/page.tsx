@@ -110,7 +110,7 @@ function ConsoleMesh({ texRef }: { texRef: React.MutableRefObject<THREE.CanvasTe
     <group position={[0, -0.3, 0.5]} rotation={[0.25, 0, 0]}>
       <mesh><boxGeometry args={[0.9, 1.2, 0.08]} /><meshStandardMaterial color="#c0c0d0" roughness={0.4} metalness={0.3} /></mesh>
       <mesh position={[0, 0.18, 0.045]}><boxGeometry args={[0.7, 0.5, 0.01]} /><meshStandardMaterial color="#1a1a1a" roughness={0.8} /></mesh>
-      <mesh ref={meshRef} position={[0, 0.18, 0.048]}><planeGeometry args={[0.6, 0.4]} /><meshBasicMaterial color="#ff0000" /></mesh>
+      <mesh ref={meshRef} position={[0, 0.18, 0.1]}><planeGeometry args={[0.6, 0.4]} /><meshBasicMaterial color="#ffff00" /></mesh>
       <mesh position={[-0.2, -0.35, 0.045]}><boxGeometry args={[0.18, 0.18, 0.015]} /><meshStandardMaterial color="#555" roughness={0.5} /></mesh>
       <mesh position={[0.2, -0.3, 0.045]}><cylinderGeometry args={[0.06, 0.06, 0.015, 16]} /><meshStandardMaterial color="#e04060" roughness={0.3} /></mesh>
       <mesh position={[0.3, -0.38, 0.045]}><cylinderGeometry args={[0.06, 0.06, 0.015, 16]} /><meshStandardMaterial color="#e04060" roughness={0.3} /></mesh>
@@ -305,6 +305,11 @@ export default function SnakePage() {
           />
           <Room />
           <Character />
+          {/* TEST: bright green sphere — if visible, scene renders */}
+          <mesh position={[0, 0.5, 1]}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshBasicMaterial color="#00ff00" />
+          </mesh>
           <ConsoleMesh texRef={texRef} />
         </Canvas>
       </div>
