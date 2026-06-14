@@ -52,7 +52,7 @@ function tick(snake: Point[], dir: string, food: Point): { snake: Point[]; food:
 
 // ═══ Console Model (GLB) ═══
 function ConsoleModel({ screenTexture }: { screenTexture: THREE.Texture }) {
-  const { scene } = useGLTF("/models/gameboy-retro.glb");
+  const { scene } = useGLTF("/r3f-lab/models/gameboy-retro.glb");
 
   // Replace screen material with dynamic texture
   useEffect(() => {
